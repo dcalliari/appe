@@ -21,7 +21,7 @@ const loginSchema = z.object({
 
 const updateProfileSchema = z.object({
 	name: z.string().min(1).optional(),
-	email: z.string().email().optional(),
+	email: z.email().optional(),
 	phone: z.string().optional(),
 	password: z.string().min(6).optional(),
 });
