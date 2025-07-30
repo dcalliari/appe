@@ -37,7 +37,9 @@ export const ChatPortaria = () => {
 	const [newMessage, setNewMessage] = useState("");
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSending, setIsSending] = useState(false);
+	const [isPolling, setIsPolling] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 	const { user } = useAuth();
 	const { toast } = useToast();
 
@@ -72,6 +74,61 @@ export const ChatPortaria = () => {
 		loadUsers();
 	}, [toast]);
 
+	// Configurar polling quando um usuário está selecionado
+	useEffect(() => {
+		// Função para carregar mensagens silenciosamente (polling)
+		const loadMessagesQuietly = async (userId: string) => {
+			if (!userId) return;
+
+			try {
+				const response = await apiClient.getMessages(userId);
+				const newMessages = response.messages || [];
+
+				setMessages((prev) => {
+					// Verificar se há novas mensagens
+					if (prev.length !== newMessages.length) {
+						// Scroll para o final se há novas mensagens
+						setTimeout(() => {
+							messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+						}, 100);
+					}
+					return newMessages;
+				});
+			} catch (error) {
+				// Silenciar erros do polling para não incomodar o usuário
+				console.error("Erro ao fazer polling de mensagens:", error);
+			}
+		};
+
+		// Limpar polling anterior
+		if (pollIntervalRef.current) {
+			clearInterval(pollIntervalRef.current);
+			pollIntervalRef.current = null;
+		}
+
+		if (selectedUserId) {
+			setIsPolling(true);
+
+			// Carregar mensagens imediatamente
+			loadMessagesQuietly(selectedUserId);
+
+			// Configurar polling a cada 3 segundos
+			pollIntervalRef.current = setInterval(() => {
+				loadMessagesQuietly(selectedUserId);
+			}, 3000);
+		} else {
+			setIsPolling(false);
+		}
+
+		// Cleanup na desmontagem
+		return () => {
+			if (pollIntervalRef.current) {
+				clearInterval(pollIntervalRef.current);
+				pollIntervalRef.current = null;
+			}
+		};
+	}, [selectedUserId]);
+
 	useEffect(() => {
 		const loadMessages = async () => {
 			if (!selectedUserId) return;
@@ -102,26 +159,21 @@ export const ChatPortaria = () => {
 				message: newMessage.trim(),
 			});
 
-			const tempMessage: ChatMessage = {
-				id: Date.now().toString(),
-				fromUserId: user?.id || "",
-				toUserId: selectedUserId,
-				message: newMessage.trim(),
-				isRead: false,
-				createdAt: new Date().toISOString(),
-			};
-
-			setMessages((prev) => [...prev, tempMessage]);
+			// Limpar a mensagem imediatamente
 			setNewMessage("");
 
-			setTimeout(async () => {
-				try {
-					const response = await apiClient.getMessages(selectedUserId);
-					setMessages(response.messages || []);
-				} catch (error) {
-					console.error("Erro ao recarregar mensagens:", error);
-				}
-			}, 500);
+			// O polling vai atualizar as mensagens automaticamente
+			// Mas vamos fazer uma atualização imediata para melhor UX
+			try {
+				const response = await apiClient.getMessages(selectedUserId);
+				setMessages(response.messages || []);
+
+				setTimeout(() => {
+					messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+				}, 100);
+			} catch (error) {
+				console.error("Erro ao recarregar mensagens:", error);
+			}
 
 			toast({
 				title: "Mensagem enviada",
@@ -213,11 +265,18 @@ export const ChatPortaria = () => {
 			<Card className="flex-1 flex flex-col">
 				<CardHeader className="pb-3">
 					<CardTitle className="flex items-center space-x-2">
-						<div className="w-3 h-3 bg-green-500 rounded-full"></div>
+						<div
+							className={`w-3 h-3 rounded-full ${isPolling ? "bg-green-500 animate-pulse" : "bg-gray-400"}`}
+						></div>
 						<span>{getSelectedUserName()}</span>
 						{selectedUserId && (
 							<span className="text-sm text-muted-foreground">
 								({getSelectedUserRole()})
+							</span>
+						)}
+						{isPolling && (
+							<span className="text-xs text-green-600 font-medium">
+								• Ao vivo
 							</span>
 						)}
 					</CardTitle>
