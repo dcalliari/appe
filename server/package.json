@@ -1,0 +1,26 @@
+{
+	"name": "server",
+	"version": "0.0.1",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"dev": "bun --watch run src/index.ts && tsc --watch",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio"
+	},
+	"dependencies": {
+		"dotenv": "^17.2.1",
+		"drizzle-kit": "^0.31.4",
+		"drizzle-orm": "^0.44.4",
+		"hono": "^4.7.11",
+		"postgres": "^3.4.7",
+		"shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/pg": "^8.15.5"
+	}
+}
