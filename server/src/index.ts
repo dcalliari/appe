@@ -1,4 +1,5 @@
 import { env } from "@server/env";
+import { authRoutes } from "@server/routes/auth";
 import { getIp } from "@server/utils/ip";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -6,7 +7,6 @@ import { logger } from "hono/logger";
 import { routePath } from "hono/route";
 import { secureHeaders } from "hono/secure-headers";
 import { rateLimiter } from "hono-rate-limiter";
-import { authRoutes } from "./routes/auth";
 
 export const app = new Hono()
 

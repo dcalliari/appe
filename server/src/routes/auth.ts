@@ -1,16 +1,16 @@
 import { zValidator } from "@hono/zod-validator";
+import { db } from "@server/db";
+import { usersInAppe } from "@server/db/schema";
 import { env } from "@server/env";
-import { eq } from "drizzle-orm";
-import { Hono } from "hono";
-import { z } from "zod";
-import { db } from "../db";
-import { usersInAppe } from "../db/schema";
 import {
 	authenticateToken,
 	comparePassword,
 	generateToken,
 	hashPassword,
-} from "../lib/auth";
+} from "@server/lib/auth";
+import { eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { z } from "zod";
 
 export const authRoutes = new Hono();
 
