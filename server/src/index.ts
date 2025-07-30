@@ -1,4 +1,4 @@
-import "dotenv/config";
+import { env } from "@server/env";
 import { getIp } from "@server/utils/ip";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -12,8 +12,8 @@ export const app = new Hono()
 
 	.use(
 		cors({
-			origin: (origin, c) => {
-				const allowedOrigins = c.env.FRONTEND_URL || "http://localhost:5173";
+			origin: (origin) => {
+				const allowedOrigins = env.FRONTEND_URL || "http://localhost:5173";
 				return origin === allowedOrigins ? origin : allowedOrigins;
 			},
 			credentials: true,
@@ -37,7 +37,7 @@ export const app = new Hono()
 			message: "🚀 APPÊ API is running!",
 			version: "1.0.0",
 			timestamp: new Date().toISOString(),
-			environment: process.env.NODE_ENV || "development",
+			environment: env.NODE_ENV || "development",
 		});
 	})
 
@@ -48,9 +48,7 @@ export const app = new Hono()
 		const data = {
 			error: "Internal Server Error",
 			message:
-				process.env.NODE_ENV === "development"
-					? err.message
-					: "Something went wrong",
+				env.NODE_ENV === "development" ? err.message : "Something went wrong",
 			success: false,
 		};
 		return c.json(data, { status: 500 });
