@@ -180,3 +180,24 @@ export const documentsInAppe = appe.table(
 		}),
 	],
 );
+
+export const logsInAppe = appe.table(
+	"logs",
+	{
+		id: uuid().primaryKey().notNull(),
+		type: text().notNull(),
+		userId: uuid("user_id"),
+		ip: varchar("ip", { length: 45 }),
+		content: text(),
+		createdAt: timestamp("created_at", { mode: "string" }).default(
+			sql`CURRENT_TIMESTAMP`,
+		),
+	},
+	(table) => [
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [usersInAppe.id],
+			name: "logs_user_id_fkey",
+		}),
+	],
+);
