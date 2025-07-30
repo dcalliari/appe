@@ -25,10 +25,8 @@ export const app = new Hono()
 			allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 			allowHeaders: ["Content-Type", "Authorization"],
 		}),
-	)
-	.use(logger())
-	.use(secureHeaders())
-	.use(
+		logger(),
+		secureHeaders(),
 		rateLimiter({
 			windowMs: 15 * 60 * 1000,
 			limit: 100,
