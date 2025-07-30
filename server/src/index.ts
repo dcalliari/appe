@@ -13,6 +13,10 @@ export const app = new Hono()
 	.use(
 		cors({
 			origin: (origin) => {
+				if (env.NODE_ENV === "development") {
+					return origin || "*";
+				}
+
 				const allowedOrigins = env.FRONTEND_URL || "http://localhost:5173";
 				return origin === allowedOrigins ? origin : allowedOrigins;
 			},
