@@ -10,9 +10,13 @@ import {
 } from "@server/lib/auth";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
+import type { Bindings, Variables } from "hono/types";
 import { z } from "zod";
 
-export const authRoutes = new Hono();
+export const authRoutes = new Hono<{
+	Bindings: Bindings;
+	Variables: Variables;
+}>();
 
 const loginSchema = z.object({
 	apartment: z.string().min(1, "Apartamento é obrigatório"),
