@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { env } from "@server/env";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -49,7 +50,7 @@ authRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
 			user.id,
 			user.apartment,
 			user.role || "resident",
-			process.env.JWT_SECRET!,
+			env.JWT_SECRET,
 		);
 
 		const { ...userWithoutPassword } = user;

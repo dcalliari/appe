@@ -1,3 +1,4 @@
+import { env } from "@server/env";
 import type { JWTPayload } from "@server/types";
 import { createMiddleware } from "hono/factory";
 import { sign, verify } from "hono/jwt";
@@ -54,7 +55,7 @@ export const authenticateToken = createMiddleware<Env>(async (c, next) => {
 	try {
 		const payload = (await verify(
 			token,
-			c.env.JWT_SECRET,
+			env.JWT_SECRET,
 		)) as unknown as JWTPayload;
 		c.set("user", payload);
 		await next();
