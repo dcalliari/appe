@@ -1,219 +1,325 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Send, Image, Clock, CheckCheck } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { CheckCheck, Clock, Image, Send, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { apiClient } from "@/lib/api";
 
-interface Message {
-  id: string;
-  content: string;
-  senderId: string;
-  senderName: string;
-  timestamp: string;
-  type: 'text' | 'image';
-  status: 'sent' | 'delivered' | 'read';
+interface ChatUser {
+	id: string;
+	name: string;
+	role: "admin" | "doorman" | "resident";
+	apartment?: string;
 }
 
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    content: 'Boa tarde! Chegou uma encomenda para vocês.',
-    senderId: 'concierge',
-    senderName: 'Portaria',
-    timestamp: '2024-01-12T14:30:00',
-    type: 'text',
-    status: 'read'
-  },
-  {
-    id: '2',
-    content: 'Oi! Que tipo de encomenda?',
-    senderId: '1',
-    senderName: 'João Silva',
-    timestamp: '2024-01-12T14:32:00',
-    type: 'text',
-    status: 'delivered'
-  },
-  {
-    id: '3',
-    content: 'É uma caixa dos Correios. Remetente: Magazine Luiza.',
-    senderId: 'concierge',
-    senderName: 'Portaria',
-    timestamp: '2024-01-12T14:33:00',
-    type: 'text',
-    status: 'read'
-  }
-];
+interface ChatMessage {
+	id: string;
+	fromUserId: string;
+	toUserId: string;
+	message: string;
+	isRead: boolean;
+	createdAt: string;
+}
 
 export const ChatPortaria = () => {
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [newMessage, setNewMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-  const { toast } = useToast();
+	const [availableUsers, setAvailableUsers] = useState<ChatUser[]>([]);
+	const [selectedUserId, setSelectedUserId] = useState<string>("");
+	const [messages, setMessages] = useState<ChatMessage[]>([]);
+	const [newMessage, setNewMessage] = useState("");
+	const [isLoading, setIsLoading] = useState(true);
+	const [isSending, setIsSending] = useState(false);
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const { user } = useAuth();
+	const { toast } = useToast();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+	useEffect(() => {
+		const loadUsers = async () => {
+			try {
+				const response = await apiClient.getChatUsers();
+				setAvailableUsers(response.users || []);
 
-  const sendMessage = () => {
-    if (!newMessage.trim()) return;
+				if (response.users && response.users.length > 0) {
+					const doorman =
+						response.users.find((u) => u.role === "doorman") ||
+						response.users[0];
+					setSelectedUserId(doorman.id);
+				}
+			} catch (error) {
+				console.error("Erro ao carregar usuários:", error);
+				toast({
+					title: "Erro ao carregar contatos",
+					description: "Não foi possível carregar a lista de contatos.",
+					variant: "destructive",
+				});
+			} finally {
+				setIsLoading(false);
+			}
+		};
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      senderId: user!.id,
-      senderName: user!.name,
-      timestamp: new Date().toISOString(),
-      type: 'text',
-      status: 'sent'
-    };
+		loadUsers();
+	}, [toast]);
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+	useEffect(() => {
+		const loadMessages = async () => {
+			if (!selectedUserId) return;
 
-    setTimeout(() => {
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === message.id
-            ? { ...msg, status: 'delivered' as const }
-            : msg
-        )
-      );
-    }, 1000);
-    if (newMessage.toLowerCase().includes('entrega') || newMessage.toLowerCase().includes('encomenda')) {
-      setTimeout(() => {
-        setIsTyping(true);
-        setTimeout(() => {
-          const response: Message = {
-            id: (Date.now() + 1).toString(),
-            content: 'Deixe-me verificar se há alguma encomenda para o seu apartamento.',
-            senderId: 'concierge',
-            senderName: 'Portaria',
-            timestamp: new Date().toISOString(),
-            type: 'text',
-            status: 'sent'
-          };
-          setMessages(prev => [...prev, response]);
-          setIsTyping(false);
-        }, 2000);
-      }, 1500);
-    }
+			try {
+				const response = await apiClient.getMessages(selectedUserId);
+				setMessages(response.messages || []);
+			} catch (error) {
+				console.error("Erro ao carregar mensagens:", error);
+				toast({
+					title: "Erro ao carregar mensagens",
+					description: "Não foi possível carregar as mensagens.",
+					variant: "destructive",
+				});
+			}
+		};
 
-    toast({
-      title: "Mensagem enviada",
-      description: "Sua mensagem foi enviada para a portaria."
-    });
-  };
+		loadMessages();
+	}, [selectedUserId, toast]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+	const sendMessage = async () => {
+		if (!newMessage.trim() || !selectedUserId || isSending) return;
 
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+		setIsSending(true);
+		try {
+			await apiClient.sendMessage({
+				to_user_id: selectedUserId,
+				message: newMessage.trim(),
+			});
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'sent':
-        return <Clock className="w-3 h-3 text-muted-foreground" />;
-      case 'delivered':
-        return <CheckCheck className="w-3 h-3 text-muted-foreground" />;
-      case 'read':
-        return <CheckCheck className="w-3 h-3 text-primary" />;
-      default:
-        return null;
-    }
-  };
+			const tempMessage: ChatMessage = {
+				id: Date.now().toString(),
+				fromUserId: user?.id || "",
+				toUserId: selectedUserId,
+				message: newMessage.trim(),
+				isRead: false,
+				createdAt: new Date().toISOString(),
+			};
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
-      <Card className="flex-1 flex flex-col">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-success rounded-full"></div>
-            <span>Chat com Portaria</span>
-          </CardTitle>
-        </CardHeader>
+			setMessages((prev) => [...prev, tempMessage]);
+			setNewMessage("");
 
-        <CardContent className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto space-y-3 mb-4">
-            {messages.map((message) => {
-              const isOwnMessage = message.senderId === user?.id;
+			setTimeout(async () => {
+				try {
+					const response = await apiClient.getMessages(selectedUserId);
+					setMessages(response.messages || []);
+				} catch (error) {
+					console.error("Erro ao recarregar mensagens:", error);
+				}
+			}, 500);
 
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[70%] rounded-lg p-3 ${isOwnMessage
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary text-secondary-foreground'
-                      }`}
-                  >
-                    {!isOwnMessage && (
-                      <p className="text-xs font-medium mb-1">{message.senderName}</p>
-                    )}
-                    <p className="text-sm">{message.content}</p>
-                    <div className={`flex items-center justify-end space-x-1 mt-1 ${isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                      }`}>
-                      <span className="text-xs">{formatTime(message.timestamp)}</span>
-                      {isOwnMessage && getStatusIcon(message.status)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+			toast({
+				title: "Mensagem enviada",
+				description: "Sua mensagem foi enviada com sucesso.",
+			});
+		} catch (error) {
+			console.error("Erro ao enviar mensagem:", error);
+			toast({
+				title: "Erro ao enviar mensagem",
+				description: "Não foi possível enviar a mensagem.",
+				variant: "destructive",
+			});
+		} finally {
+			setIsSending(false);
+		}
+	};
 
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-secondary text-secondary-foreground rounded-lg p-3 max-w-[70%]">
-                  <p className="text-xs font-medium mb-1">Portaria</p>
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
+	const handleKeyPress = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			sendMessage();
+		}
+	};
 
-            <div ref={messagesEndRef} />
-          </div>
+	const formatTime = (timestamp: string) => {
+		return new Date(timestamp).toLocaleTimeString("pt-BR", {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
 
-          <div className="border-t pt-4">
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="px-3">
-                <Image className="w-4 h-4" />
-              </Button>
-              <Input
-                placeholder="Digite sua mensagem..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1"
-              />
-              <Button onClick={sendMessage} disabled={!newMessage.trim()}>
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+	const getSelectedUserName = () => {
+		const selectedUser = availableUsers.find((u) => u.id === selectedUserId);
+		return selectedUser ? selectedUser.name : "Selecione um contato";
+	};
+
+	const getSelectedUserRole = () => {
+		const selectedUser = availableUsers.find((u) => u.id === selectedUserId);
+		if (!selectedUser) return "";
+
+		switch (selectedUser.role) {
+			case "doorman":
+				return "Portaria";
+			case "admin":
+				return "Administração";
+			default:
+				return selectedUser.role;
+		}
+	};
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+				<div className="text-center">
+					<div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+					<p className="text-muted-foreground">Carregando chat...</p>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex flex-col h-[calc(100vh-8rem)]">
+			<Card className="mb-4">
+				<CardContent className="p-4">
+					<div className="flex items-center space-x-4">
+						<Users className="w-5 h-5 text-muted-foreground" />
+						<div className="flex-1">
+							<Select value={selectedUserId} onValueChange={setSelectedUserId}>
+								<SelectTrigger>
+									<SelectValue placeholder="Selecione um contato" />
+								</SelectTrigger>
+								<SelectContent>
+									{availableUsers.map((chatUser) => (
+										<SelectItem key={chatUser.id} value={chatUser.id}>
+											{chatUser.name} -{" "}
+											{chatUser.role === "doorman"
+												? "Portaria"
+												: "Administração"}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+
+			<Card className="flex-1 flex flex-col">
+				<CardHeader className="pb-3">
+					<CardTitle className="flex items-center space-x-2">
+						<div className="w-3 h-3 bg-green-500 rounded-full"></div>
+						<span>{getSelectedUserName()}</span>
+						{selectedUserId && (
+							<span className="text-sm text-muted-foreground">
+								({getSelectedUserRole()})
+							</span>
+						)}
+					</CardTitle>
+				</CardHeader>
+
+				<CardContent className="flex-1 flex flex-col">
+					<div className="flex-1 overflow-y-auto space-y-3 mb-4">
+						{!selectedUserId ? (
+							<div className="flex items-center justify-center h-full">
+								<div className="text-center">
+									<Users className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+									<p className="text-muted-foreground">
+										Selecione um contato para iniciar uma conversa
+									</p>
+								</div>
+							</div>
+						) : messages.length === 0 ? (
+							<div className="flex items-center justify-center h-full">
+								<div className="text-center">
+									<Clock className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+									<p className="text-muted-foreground">
+										Nenhuma mensagem ainda
+									</p>
+									<p className="text-sm text-muted-foreground">
+										Envie uma mensagem para começar a conversa
+									</p>
+								</div>
+							</div>
+						) : (
+							messages.map((message) => {
+								const isOwnMessage = message.fromUserId === user?.id;
+
+								return (
+									<div
+										key={message.id}
+										className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
+									>
+										<div
+											className={`max-w-[70%] rounded-lg p-3 ${
+												isOwnMessage
+													? "bg-primary text-primary-foreground"
+													: "bg-secondary text-secondary-foreground"
+											}`}
+										>
+											<p className="text-sm">{message.message}</p>
+											<div
+												className={`flex items-center justify-end space-x-1 mt-1 ${
+													isOwnMessage
+														? "text-primary-foreground/70"
+														: "text-muted-foreground"
+												}`}
+											>
+												<span className="text-xs">
+													{formatTime(message.createdAt)}
+												</span>
+												{isOwnMessage &&
+													(message.isRead ? (
+														<CheckCheck className="w-3 h-3 text-blue-400" />
+													) : (
+														<CheckCheck className="w-3 h-3" />
+													))}
+											</div>
+										</div>
+									</div>
+								);
+							})
+						)}
+
+						<div ref={messagesEndRef} />
+					</div>
+
+					<div className="border-t pt-4">
+						<div className="flex space-x-2">
+							<Button variant="outline" size="sm" className="px-3" disabled>
+								<Image className="w-4 h-4" />
+							</Button>
+							<Input
+								placeholder={
+									selectedUserId
+										? "Digite sua mensagem..."
+										: "Selecione um contato primeiro"
+								}
+								value={newMessage}
+								onChange={(e) => setNewMessage(e.target.value)}
+								onKeyPress={handleKeyPress}
+								className="flex-1"
+								disabled={!selectedUserId || isSending}
+							/>
+							<Button
+								onClick={sendMessage}
+								disabled={!newMessage.trim() || !selectedUserId || isSending}
+							>
+								{isSending ? (
+									<div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+								) : (
+									<Send className="w-4 h-4" />
+								)}
+							</Button>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+		</div>
+	);
 };
