@@ -100,6 +100,10 @@ class ApiClient {
   }
 
   // Chat endpoints
+  async getChatUsers() {
+    return this.request<{ users: any[] }>('/api/chat/users')
+  }
+
   async getConversations() {
     return this.request<{ conversations: any[] }>('/api/chat/conversations')
   }
