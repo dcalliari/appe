@@ -43,13 +43,28 @@ export const app = new Hono()
 
 	.route("/api/auth", authRoutes)
 
-	.get("/hello", async (c) => {
-		const data: ApiResponse = {
-			message: "Hello BHVR!",
-			success: true,
+	.onError((err, c) => {
+		console.error("API Error:", err);
+		const data = {
+			error: "Internal Server Error",
+			message:
+				process.env.NODE_ENV === "development"
+					? err.message
+					: "Something went wrong",
+			success: false,
 		};
+		return c.json(data, { status: 500 });
+	})
 
-		return c.json(data, { status: 200 });
+	.notFound((c) => {
+		return c.json(
+			{
+				error: "Not Found",
+				message: "The requested resource could not be found.",
+				success: false,
+			},
+			{ status: 404 },
+		);
 	});
 
 export default app;
