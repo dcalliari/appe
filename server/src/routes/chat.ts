@@ -2,20 +2,15 @@ import { zValidator } from "@hono/zod-validator";
 import { db } from "@server/db";
 import { chatMessagesInAppe, usersInAppe } from "@server/db/schema";
 import { authenticateToken } from "@server/lib/auth";
+import { sendMessageSchema } from "@server/schemas/chat";
 import { and, desc, eq, ne, or } from "drizzle-orm";
 import { Hono } from "hono";
 import type { Bindings, Variables } from "hono/types";
-import { z } from "zod";
 
 export const chatRoutes = new Hono<{
 	Bindings: Bindings;
 	Variables: Variables;
 }>();
-
-const sendMessageSchema = z.object({
-	to_user_id: z.string().min(1, "Destinatário é obrigatório"),
-	message: z.string().min(1, "Mensagem é obrigatória"),
-});
 
 chatRoutes.get("/users", authenticateToken, async (c) => {
 	try {
