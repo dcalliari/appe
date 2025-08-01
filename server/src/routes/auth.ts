@@ -8,27 +8,15 @@ import {
 	generateToken,
 	hashPassword,
 } from "@server/lib/auth";
+import { loginSchema, updateProfileSchema } from "@server/schemas/auth";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import type { Bindings, Variables } from "hono/types";
-import { z } from "zod";
 
 export const authRoutes = new Hono<{
 	Bindings: Bindings;
 	Variables: Variables;
 }>();
-
-const loginSchema = z.object({
-	apartment: z.string().min(1, "Apartamento é obrigatório"),
-	password: z.string().min(1, "Senha é obrigatória"),
-});
-
-const updateProfileSchema = z.object({
-	name: z.string().min(1).optional(),
-	email: z.email().optional(),
-	phone: z.string().optional(),
-	password: z.string().min(6).optional(),
-});
 
 authRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
 	try {
