@@ -9,6 +9,7 @@ import { logger } from "hono/logger";
 import { routePath } from "hono/route";
 import { secureHeaders } from "hono/secure-headers";
 import { rateLimiter } from "hono-rate-limiter";
+import { noticesRoutes } from "./routes/notices";
 
 export const app = new Hono()
 
@@ -48,6 +49,7 @@ export const app = new Hono()
 	.route("/api/auth", authRoutes)
 	.route("/api/chat", chatRoutes)
 	.route("/api/visitors", visitorsRoutes)
+	.route("/api/notices", noticesRoutes)
 
 	.onError((err, c) => {
 		console.error("API Error:", err);
