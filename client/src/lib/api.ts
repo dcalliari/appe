@@ -1,3 +1,5 @@
+import type { Notice } from "@/types";
+
 // Define the base API URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -81,7 +83,7 @@ class ApiClient {
 
 	// Notices endpoints
 	async getNotices() {
-		return this.request<{ notices: any[] }>("/api/notices");
+		return this.request<{ data: Notice[] }>("/api/notices");
 	}
 
 	async createNotice(data: any) {

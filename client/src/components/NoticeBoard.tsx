@@ -4,17 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
-
-interface Notice {
-	id: string;
-	title: string;
-	content: string;
-	type: "maintenance" | "general" | "meeting";
-	priority: "low" | "medium" | "high";
-	created_by: string;
-	created_at: string;
-	expires_at?: string;
-}
+import type { Notice } from "@/types";
 
 export const NoticeBoard = () => {
 	const [notices, setNotices] = useState<Notice[]>([]);
@@ -25,7 +15,7 @@ export const NoticeBoard = () => {
 		const loadNotices = async () => {
 			try {
 				const response = await apiClient.getNotices();
-				setNotices(response.notices || []);
+				setNotices(response.data || []);
 			} catch (error) {
 				console.error("Erro ao carregar avisos:", error);
 				toast({
