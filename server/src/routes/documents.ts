@@ -49,51 +49,71 @@ export const documentsRoutes = new Hono<{
 	})
 
 	.get("/:id", authenticateToken, async (c) => {
-		const { id } = c.req.param();
-		const document = await db
-			.select()
-			.from(documentsInAppe)
-			.where(eq(documentsInAppe.id, id))
-			.limit(1);
-		if (document.length === 0) {
-			return c.json({ error: "Document not found" }, 404);
+		try {
+			const { id } = c.req.param();
+			const [document] = await db
+				.select()
+				.from(documentsInAppe)
+				.where(eq(documentsInAppe.id, id))
+				.limit(1);
+			if (!document) {
+				return c.json({ error: "Document not found" }, 404);
+			}
+			return c.json(document, 200);
+		} catch (error) {
+			console.error("Error fetching document:", error);
+			return c.json({ error: "Error fetching document" }, 500);
 		}
-		return c.json(document[0]);
 	})
 
 	.post("/", authenticateToken, requireRole(["admin"]), async (c) => {
-		const newDocument = await c.req.json();
-		const result = await db
-			.insert(documentsInAppe)
-			.values(newDocument)
-			.returning();
-		return c.json(result[0]);
+		try {
+			const newDocument = await c.req.json();
+			const [result] = await db
+				.insert(documentsInAppe)
+				.values(newDocument)
+				.returning();
+			return c.json(result, 201);
+		} catch (error) {
+			console.error("Error creating document:", error);
+			return c.json({ error: "Error creating document" }, 500);
+		}
 	})
 
 	.put("/:id", authenticateToken, requireRole(["admin"]), async (c) => {
-		const { id } = c.req.param();
-		const updatedDocument = await c.req.json();
-		const result = await db
-			.update(documentsInAppe)
-			.set(updatedDocument)
-			.where(eq(documentsInAppe.id, id))
-			.returning();
-		if (result.length === 0) {
-			return c.json({ error: "Document not found" }, 404);
+		try {
+			const { id } = c.req.param();
+			const updatedDocument = await c.req.json();
+			const [result] = await db
+				.update(documentsInAppe)
+				.set(updatedDocument)
+				.where(eq(documentsInAppe.id, id))
+				.returning();
+			if (!result) {
+				return c.json({ error: "Document not found" }, 404);
+			}
+			return c.json(result, 200);
+		} catch (error) {
+			console.error("Error updating document:", error);
+			return c.json({ error: "Error updating document" }, 500);
 		}
-		return c.json(result[0]);
 	})
 
 	.delete("/:id", authenticateToken, requireRole(["admin"]), async (c) => {
-		const { id } = c.req.param();
-		const result = await db
-			.delete(documentsInAppe)
-			.where(eq(documentsInAppe.id, id))
-			.returning();
-		if (result.length === 0) {
-			return c.json({ error: "Document not found" }, 404);
+		try {
+			const { id } = c.req.param();
+			const [result] = await db
+				.delete(documentsInAppe)
+				.where(eq(documentsInAppe.id, id))
+				.returning();
+			if (!result) {
+				return c.json({ error: "Document not found" }, 404);
+			}
+			return c.json({ message: "Document deleted successfully" }, 200);
+		} catch (error) {
+			console.error("Error deleting document:", error);
+			return c.json({ error: "Error deleting document" }, 500);
 		}
-		return c.json({ message: "Document deleted successfully" });
 	})
 
 	.get("/:id/download", authenticateToken, async (c) => {
