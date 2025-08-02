@@ -39,7 +39,7 @@ export const documentsRoutes = new Hono<{
 				.select()
 				.from(documentsInAppe)
 				.where(and(...filters))
-				.orderBy(desc(documentsInAppe.uploadedAt));
+				.orderBy(desc(documentsInAppe.uploaded_at));
 
 			return c.json({ success: true, data: documentsList }, 200);
 		} catch (error) {
@@ -129,7 +129,7 @@ export const documentsRoutes = new Hono<{
 				return c.json({ error: "Document not found" }, 404);
 			}
 
-			const filePath = document.filePath;
+			const filePath = document.file_path;
 			if (!filePath) {
 				return c.json({ error: "File path not found" }, 404);
 			}

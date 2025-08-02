@@ -22,14 +22,14 @@ export const bookingsRoutes = new Hono<{
 			const whereClause =
 				userPayload.role === "admin"
 					? ""
-					: sql`${spaceBookingsInAppe.userId} = ${userPayload.userId}`;
+					: sql`${spaceBookingsInAppe.user_id} = ${userPayload.userId}`;
 
 			const bookings = await db
 				.select()
 				.from(spaceBookingsInAppe)
 				.where(sql`${whereClause}`)
-				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.userId, usersInAppe.id))
-				.orderBy(desc(spaceBookingsInAppe.createdAt));
+				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.user_id, usersInAppe.id))
+				.orderBy(desc(spaceBookingsInAppe.created_at));
 
 			return c.json({ success: true, data: bookings }, 200);
 		} catch (error) {
@@ -47,7 +47,7 @@ export const bookingsRoutes = new Hono<{
 				.select()
 				.from(spaceBookingsInAppe)
 				.where(eq(spaceBookingsInAppe.id, id))
-				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.userId, usersInAppe.id))
+				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.user_id, usersInAppe.id))
 				.limit(1);
 
 			if (!booking) {
@@ -56,7 +56,7 @@ export const bookingsRoutes = new Hono<{
 
 			if (
 				userPayload.role !== "admin" &&
-				booking.space_bookings.userId !== userPayload.userId
+				booking.space_bookings.user_id !== userPayload.userId
 			) {
 				return c.json({ success: false, error: "Unauthorized access" }, 403);
 			}
@@ -87,12 +87,12 @@ export const bookingsRoutes = new Hono<{
 				.from(spaceBookingsInAppe)
 				.where(
 					and(
-						eq(spaceBookingsInAppe.spaceName, spaceName),
-						eq(spaceBookingsInAppe.bookingDate, targetDate),
+						eq(spaceBookingsInAppe.space_name, spaceName),
+						eq(spaceBookingsInAppe.booking_date, targetDate),
 						not(eq(spaceBookingsInAppe.status, "rejected")),
 					),
 				)
-				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.userId, usersInAppe.id));
+				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.user_id, usersInAppe.id));
 
 			return c.json(
 				{
@@ -124,9 +124,9 @@ export const bookingsRoutes = new Hono<{
 					.from(spaceBookingsInAppe)
 					.where(
 						and(
-							eq(spaceBookingsInAppe.spaceName, validatedData.space_name),
+							eq(spaceBookingsInAppe.space_name, validatedData.space_name),
 							eq(
-								spaceBookingsInAppe.bookingDate,
+								spaceBookingsInAppe.booking_date,
 								validatedData.booking_date.toISOString(),
 							),
 							not(eq(spaceBookingsInAppe.status, "rejected")),
@@ -149,11 +149,11 @@ export const bookingsRoutes = new Hono<{
 
 				const newBooking = await db.insert(spaceBookingsInAppe).values({
 					id: crypto.randomUUID(),
-					userId: userPayload.userId,
-					spaceName: validatedData.space_name,
-					bookingDate: validatedData.booking_date.toISOString(),
-					startTime: validatedData.start_time,
-					endTime: validatedData.end_time,
+					user_id: userPayload.userId,
+					space_name: validatedData.space_name,
+					booking_date: validatedData.booking_date.toISOString(),
+					start_time: validatedData.start_time,
+					end_time: validatedData.end_time,
 				});
 
 				return c.json(
@@ -185,7 +185,10 @@ export const bookingsRoutes = new Hono<{
 					.select()
 					.from(spaceBookingsInAppe)
 					.where(eq(spaceBookingsInAppe.id, id))
-					.leftJoin(usersInAppe, eq(spaceBookingsInAppe.userId, usersInAppe.id))
+					.leftJoin(
+						usersInAppe,
+						eq(spaceBookingsInAppe.user_id, usersInAppe.id),
+					)
 					.limit(1);
 
 				if (!existingBooking) {
@@ -194,7 +197,7 @@ export const bookingsRoutes = new Hono<{
 
 				if (
 					userPayload.role !== "admin" &&
-					existingBooking.space_bookings.userId !== userPayload.userId
+					existingBooking.space_bookings.user_id !== userPayload.userId
 				) {
 					return c.json({ success: false, error: "Unauthorized access" }, 403);
 				}
@@ -209,10 +212,10 @@ export const bookingsRoutes = new Hono<{
 				) {
 					const newSpaceName =
 						validatedData.space_name ||
-						existingBooking.space_bookings.spaceName;
+						existingBooking.space_bookings.space_name;
 					const newBookingDate =
 						validatedData.booking_date ||
-						existingBooking.space_bookings.bookingDate;
+						existingBooking.space_bookings.booking_date;
 
 					const [conflictingBookings] = await db
 						.select()
@@ -220,8 +223,8 @@ export const bookingsRoutes = new Hono<{
 						.where(
 							and(
 								not(eq(spaceBookingsInAppe.id, id)),
-								eq(spaceBookingsInAppe.spaceName, newSpaceName),
-								eq(spaceBookingsInAppe.bookingDate, newBookingDate.toString()),
+								eq(spaceBookingsInAppe.space_name, newSpaceName),
+								eq(spaceBookingsInAppe.booking_date, newBookingDate.toString()),
 								not(eq(spaceBookingsInAppe.status, "rejected")),
 							),
 						);
@@ -249,6 +252,9 @@ export const bookingsRoutes = new Hono<{
 					.update(spaceBookingsInAppe)
 					.set({
 						...validatedData,
+						booking_date: validatedData.booking_date
+							? validatedData.booking_date.toISOString()
+							: undefined,
 						status: validatedData.status ? validatedData.status : undefined,
 					})
 					.where(eq(spaceBookingsInAppe.id, id));
@@ -277,7 +283,7 @@ export const bookingsRoutes = new Hono<{
 				.select()
 				.from(spaceBookingsInAppe)
 				.where(eq(spaceBookingsInAppe.id, id))
-				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.userId, usersInAppe.id))
+				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.user_id, usersInAppe.id))
 				.limit(1);
 
 			if (!existingBooking) {
@@ -286,7 +292,7 @@ export const bookingsRoutes = new Hono<{
 
 			if (
 				userPayload.role !== "admin" &&
-				existingBooking.space_bookings.userId !== userPayload.userId
+				existingBooking.space_bookings.user_id !== userPayload.userId
 			) {
 				return c.json({ success: false, error: "Unauthorized access" }, 403);
 			}
@@ -352,7 +358,7 @@ export const bookingsRoutes = new Hono<{
 				.select()
 				.from(spaceBookingsInAppe)
 				.where(eq(spaceBookingsInAppe.id, id))
-				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.userId, usersInAppe.id))
+				.leftJoin(usersInAppe, eq(spaceBookingsInAppe.user_id, usersInAppe.id))
 				.limit(1);
 
 			if (!existingBooking) {
@@ -361,7 +367,7 @@ export const bookingsRoutes = new Hono<{
 
 			if (
 				userPayload.role !== "admin" &&
-				existingBooking.space_bookings.userId !== userPayload.userId
+				existingBooking.space_bookings.user_id !== userPayload.userId
 			) {
 				return c.json({ success: false, error: "Unauthorized access" }, 403);
 			}

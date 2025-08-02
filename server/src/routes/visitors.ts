@@ -22,17 +22,17 @@ export const visitorsRoutes = new Hono<{
 			const whereClause =
 				userPayload.role === "admin"
 					? ""
-					: sql`${visitorRequestsInAppe.requesterId} = ${userPayload.userId}`;
+					: sql`${visitorRequestsInAppe.requester_id} = ${userPayload.userId}`;
 
 			const visitors = await db
 				.select()
 				.from(visitorRequestsInAppe)
 				.innerJoin(
 					usersInAppe,
-					eq(visitorRequestsInAppe.requesterId, usersInAppe.id),
+					eq(visitorRequestsInAppe.requester_id, usersInAppe.id),
 				)
 				.where(sql`${whereClause}`)
-				.orderBy(visitorRequestsInAppe.createdAt);
+				.orderBy(visitorRequestsInAppe.created_at);
 
 			return c.json(
 				{
@@ -57,7 +57,7 @@ export const visitorsRoutes = new Hono<{
 				.from(visitorRequestsInAppe)
 				.innerJoin(
 					usersInAppe,
-					eq(visitorRequestsInAppe.requesterId, usersInAppe.id),
+					eq(visitorRequestsInAppe.requester_id, usersInAppe.id),
 				)
 				.where(eq(visitorRequestsInAppe.id, id))
 				.limit(1);
@@ -68,7 +68,7 @@ export const visitorsRoutes = new Hono<{
 
 			if (
 				userPayload.role !== "admin" &&
-				visitor.visitor_requests.requesterId !== userPayload.userId
+				visitor.visitor_requests.requester_id !== userPayload.userId
 			) {
 				return c.json({ success: false, error: "Unauthorized access" }, 403);
 			}
@@ -93,11 +93,11 @@ export const visitorsRoutes = new Hono<{
 					.insert(visitorRequestsInAppe)
 					.values({
 						id: crypto.randomUUID(),
-						requesterId: userPayload.userId,
-						visitorName: validatedData.visitor_name,
-						visitorDocument: validatedData.visitor_document,
-						visitDate: validatedData.visit_date.toDateString(),
-						visitTime: validatedData.visit_time,
+						requester_id: userPayload.userId,
+						visitor_name: validatedData.visitor_name,
+						visitor_document: validatedData.visitor_document,
+						visit_date: validatedData.visit_date.toDateString(),
+						visit_time: validatedData.visit_time,
 						status: "pending",
 					})
 					.returning();
@@ -142,7 +142,7 @@ export const visitorsRoutes = new Hono<{
 
 				if (
 					userPayload.role !== "admin" &&
-					existingVisitor.requesterId !== userPayload.userId
+					existingVisitor.requester_id !== userPayload.userId
 				) {
 					return c.json({ success: false, error: "Unauthorized access" }, 403);
 				}
@@ -192,7 +192,7 @@ export const visitorsRoutes = new Hono<{
 
 			if (
 				userPayload.role !== "admin" &&
-				existingVisitor.requesterId !== userPayload.userId
+				existingVisitor.requester_id !== userPayload.userId
 			) {
 				return c.json({ success: false, error: "Unauthorized access" }, 403);
 			}
@@ -273,7 +273,7 @@ export const visitorsRoutes = new Hono<{
 
 			if (
 				userPayload.role !== "admin" &&
-				existingVisitor.requesterId !== userPayload.userId
+				existingVisitor.requester_id !== userPayload.userId
 			) {
 				return c.json(
 					{ success: false, message: "Acesso não autorizado" },

@@ -34,7 +34,7 @@ export const authRoutes = new Hono<{
 
 			const isValidPassword = await comparePassword(
 				password,
-				user.passwordHash,
+				user.password_hash,
 			);
 
 			if (!isValidPassword) {
@@ -72,7 +72,7 @@ export const authRoutes = new Hono<{
 					email: usersInAppe.email,
 					role: usersInAppe.role,
 					phone: usersInAppe.phone,
-					createdAt: usersInAppe.createdAt,
+					createdAt: usersInAppe.created_at,
 				})
 				.from(usersInAppe)
 				.where(eq(usersInAppe.id, userId))
@@ -123,7 +123,7 @@ export const authRoutes = new Hono<{
 						email: usersInAppe.email,
 						role: usersInAppe.role,
 						phone: usersInAppe.phone,
-						createdAt: usersInAppe.createdAt,
+						created_at: usersInAppe.created_at,
 					});
 
 				return c.json({

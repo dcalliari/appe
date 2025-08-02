@@ -19,11 +19,11 @@ export const noticesRoutes = new Hono<{
 				.from(noticesInAppe)
 				.where(
 					or(
-						isNull(noticesInAppe.expiresAt),
-						gte(noticesInAppe.expiresAt, new Date().toDateString()),
+						isNull(noticesInAppe.expires_at),
+						gte(noticesInAppe.expires_at, new Date().toDateString()),
 					),
 				)
-				.orderBy(desc(noticesInAppe.createdAt));
+				.orderBy(desc(noticesInAppe.created_at));
 
 			return c.json(
 				{
@@ -61,8 +61,8 @@ export const noticesRoutes = new Hono<{
 						content: data.content,
 						type: data.type,
 						priority: data.priority,
-						createdBy: userId,
-						expiresAt: data.expires_at,
+						created_by: userId,
+						expires_at: data.expires_at,
 					})
 					.returning();
 

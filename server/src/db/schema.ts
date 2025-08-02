@@ -52,12 +52,10 @@ export const usersInAppe = appe.table(
 		apartment: varchar({ length: 10 }).notNull(),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }),
-		passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+		password_hash: varchar({ length: 255 }).notNull(),
 		role: userRoleInAppe().default("resident"),
 		phone: varchar({ length: 20 }),
-		createdAt: timestamp("created_at", { mode: "string" }).default(
-			sql`CURRENT_TIMESTAMP`,
-		),
+		created_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
 	},
 	(table) => [
 		unique("users_apartment_key").on(table.apartment),
@@ -73,15 +71,13 @@ export const noticesInAppe = appe.table(
 		content: text().notNull(),
 		type: noticeTypeInAppe().notNull(),
 		priority: noticePriorityInAppe().default("medium"),
-		createdBy: uuid("created_by"),
-		createdAt: timestamp("created_at", { mode: "string" }).default(
-			sql`CURRENT_TIMESTAMP`,
-		),
-		expiresAt: timestamp("expires_at", { mode: "string" }),
+		created_by: uuid(),
+		created_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
+		expires_at: timestamp({ mode: "string" }),
 	},
 	(table) => [
 		foreignKey({
-			columns: [table.createdBy],
+			columns: [table.created_by],
 			foreignColumns: [usersInAppe.id],
 			name: "notices_created_by_fkey",
 		}),
@@ -92,22 +88,20 @@ export const chatMessagesInAppe = appe.table(
 	"chat_messages",
 	{
 		id: uuid().primaryKey().notNull(),
-		fromUserId: uuid("from_user_id"),
-		toUserId: uuid("to_user_id"),
+		from_user_id: uuid(),
+		to_user_id: uuid(),
 		message: text().notNull(),
-		isRead: boolean("is_read").default(false),
-		createdAt: timestamp("created_at", { mode: "string" }).default(
-			sql`CURRENT_TIMESTAMP`,
-		),
+		is_read: boolean().default(false),
+		created_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
 	},
 	(table) => [
 		foreignKey({
-			columns: [table.fromUserId],
+			columns: [table.from_user_id],
 			foreignColumns: [usersInAppe.id],
 			name: "chat_messages_from_user_id_fkey",
 		}),
 		foreignKey({
-			columns: [table.toUserId],
+			columns: [table.to_user_id],
 			foreignColumns: [usersInAppe.id],
 			name: "chat_messages_to_user_id_fkey",
 		}),
@@ -118,19 +112,17 @@ export const visitorRequestsInAppe = appe.table(
 	"visitor_requests",
 	{
 		id: uuid().primaryKey().notNull(),
-		requesterId: uuid("requester_id"),
-		visitorName: varchar("visitor_name", { length: 255 }).notNull(),
-		visitorDocument: varchar("visitor_document", { length: 50 }),
-		visitDate: date("visit_date").notNull(),
-		visitTime: time("visit_time"),
+		requester_id: uuid(),
+		visitor_name: varchar({ length: 255 }).notNull(),
+		visitor_document: varchar({ length: 50 }),
+		visit_date: date().notNull(),
+		visit_time: time(),
 		status: visitorStatusInAppe().default("pending"),
-		createdAt: timestamp("created_at", { mode: "string" }).default(
-			sql`CURRENT_TIMESTAMP`,
-		),
+		created_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
 	},
 	(table) => [
 		foreignKey({
-			columns: [table.requesterId],
+			columns: [table.requester_id],
 			foreignColumns: [usersInAppe.id],
 			name: "visitor_requests_requester_id_fkey",
 		}),
@@ -141,19 +133,17 @@ export const spaceBookingsInAppe = appe.table(
 	"space_bookings",
 	{
 		id: uuid().primaryKey().notNull(),
-		userId: uuid("user_id"),
-		spaceName: varchar("space_name", { length: 255 }).notNull(),
-		bookingDate: date("booking_date").notNull(),
-		startTime: time("start_time").notNull(),
-		endTime: time("end_time").notNull(),
+		user_id: uuid(),
+		space_name: varchar({ length: 255 }).notNull(),
+		booking_date: date().notNull(),
+		start_time: time().notNull(),
+		end_time: time().notNull(),
 		status: bookingStatusInAppe().default("pending"),
-		createdAt: timestamp("created_at", { mode: "string" }).default(
-			sql`CURRENT_TIMESTAMP`,
-		),
+		created_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
 	},
 	(table) => [
 		foreignKey({
-			columns: [table.userId],
+			columns: [table.user_id],
 			foreignColumns: [usersInAppe.id],
 			name: "space_bookings_user_id_fkey",
 		}),
@@ -165,16 +155,14 @@ export const documentsInAppe = appe.table(
 	{
 		id: uuid().primaryKey().notNull(),
 		title: varchar({ length: 255 }).notNull(),
-		filePath: varchar("file_path", { length: 500 }).notNull(),
+		file_path: varchar({ length: 500 }).notNull(),
 		category: documentCategoryInAppe(),
-		uploadedBy: uuid("uploaded_by"),
-		uploadedAt: timestamp("uploaded_at", { mode: "string" }).default(
-			sql`CURRENT_TIMESTAMP`,
-		),
+		uploaded_by: uuid(),
+		uploaded_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
 	},
 	(table) => [
 		foreignKey({
-			columns: [table.uploadedBy],
+			columns: [table.uploaded_by],
 			foreignColumns: [usersInAppe.id],
 			name: "documents_uploaded_by_fkey",
 		}),

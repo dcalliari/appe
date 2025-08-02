@@ -47,17 +47,17 @@ export const chatRoutes = new Hono<{
 				.from(chatMessagesInAppe)
 				.where(
 					or(
-						eq(chatMessagesInAppe.fromUserId, userId),
-						eq(chatMessagesInAppe.toUserId, userId),
+						eq(chatMessagesInAppe.from_user_id, userId),
+						eq(chatMessagesInAppe.to_user_id, userId),
 					),
 				)
-				.orderBy(desc(chatMessagesInAppe.createdAt));
+				.orderBy(desc(chatMessagesInAppe.created_at));
 
 			const conversations = new Map();
 
 			userMessages.forEach((msg) => {
 				const otherUserId =
-					msg.fromUserId === userId ? msg.toUserId : msg.fromUserId;
+					msg.from_user_id === userId ? msg.to_user_id : msg.from_user_id;
 
 				if (!conversations.has(otherUserId)) {
 					conversations.set(otherUserId, {
@@ -68,15 +68,15 @@ export const chatRoutes = new Hono<{
 				} else {
 					const conv = conversations.get(otherUserId);
 					if (
-						msg.createdAt &&
+						msg.created_at &&
 						conv.last_message.createdAt &&
-						msg.createdAt > conv.last_message.createdAt
+						msg.created_at > conv.last_message.createdAt
 					) {
 						conv.last_message = msg;
 					}
 				}
 
-				if (msg.toUserId === userId && !msg.isRead) {
+				if (msg.to_user_id === userId && !msg.is_read) {
 					conversations.get(otherUserId).unread_count++;
 				}
 			});
@@ -103,25 +103,25 @@ export const chatRoutes = new Hono<{
 				.where(
 					or(
 						and(
-							eq(chatMessagesInAppe.fromUserId, userId),
-							eq(chatMessagesInAppe.toUserId, otherUserId),
+							eq(chatMessagesInAppe.from_user_id, userId),
+							eq(chatMessagesInAppe.to_user_id, otherUserId),
 						),
 						and(
-							eq(chatMessagesInAppe.fromUserId, otherUserId),
-							eq(chatMessagesInAppe.toUserId, userId),
+							eq(chatMessagesInAppe.from_user_id, otherUserId),
+							eq(chatMessagesInAppe.to_user_id, userId),
 						),
 					),
 				)
-				.orderBy(chatMessagesInAppe.createdAt);
+				.orderBy(chatMessagesInAppe.created_at);
 
 			await db
 				.update(chatMessagesInAppe)
-				.set({ isRead: true })
+				.set({ is_read: true })
 				.where(
 					and(
-						eq(chatMessagesInAppe.toUserId, userId),
-						eq(chatMessagesInAppe.fromUserId, otherUserId),
-						eq(chatMessagesInAppe.isRead, false),
+						eq(chatMessagesInAppe.to_user_id, userId),
+						eq(chatMessagesInAppe.from_user_id, otherUserId),
+						eq(chatMessagesInAppe.is_read, false),
 					),
 				);
 
@@ -152,11 +152,11 @@ export const chatRoutes = new Hono<{
 					.insert(chatMessagesInAppe)
 					.values({
 						id: crypto.randomUUID(),
-						fromUserId: userId,
-						toUserId: to_user_id,
+						from_user_id: userId,
+						to_user_id: to_user_id,
 						message,
-						isRead: false,
-						createdAt: new Date().toISOString(),
+						is_read: false,
+						created_at: new Date().toISOString(),
 					})
 					.returning();
 
