@@ -94,10 +94,10 @@ export const visitorsRoutes = new Hono<{
 					.values({
 						id: crypto.randomUUID(),
 						requesterId: userPayload.userId,
-						visitorName: validatedData.visitorName,
-						visitorDocument: validatedData.visitorDocument,
-						visitDate: validatedData.visitDate.toDateString(),
-						visitTime: validatedData.visitTime,
+						visitorName: validatedData.visitor_name,
+						visitorDocument: validatedData.visitor_document,
+						visitDate: validatedData.visit_date.toDateString(),
+						visitTime: validatedData.visit_time,
 						status: "pending",
 					})
 					.returning();
