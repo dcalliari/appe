@@ -1,0 +1,117 @@
+import { db } from "@server/db";
+import { documentCategoryInAppe, documentsInAppe } from "@server/db/schema";
+import { authenticateToken, requireRole } from "@server/lib/auth";
+import { and, desc, eq, like, type SQL } from "drizzle-orm";
+import { Hono } from "hono";
+import type { Bindings, Variables } from "hono/types";
+
+export const documentsRoutes = new Hono<{
+	Bindings: Bindings;
+	Variables: Variables;
+}>()
+
+	.get("/categories", authenticateToken, async (c) => {
+		const categories = documentCategoryInAppe.enumValues.map((value) => {
+			const labels = {
+				meeting_minutes: "Atas de Reuniões",
+				bills: "Boletos e Taxas",
+				regulations: "Regulamentos",
+				announcements: "Comunicados",
+			};
+			return { value, label: labels[value] };
+		});
+		return c.json({ categories });
+	})
+
+	.get("/", authenticateToken, async (c) => {
+		try {
+			const category = c.req.query("category") as
+				| (typeof documentCategoryInAppe.enumValues)[number]
+				| undefined;
+			const search = c.req.query("search");
+
+			const filters: SQL[] = [];
+
+			if (category) filters.push(eq(documentsInAppe.category, category));
+			if (search) filters.push(like(documentsInAppe.title, `%${search}%`));
+
+			const documentsList = await db
+				.select()
+				.from(documentsInAppe)
+				.where(and(...filters))
+				.orderBy(desc(documentsInAppe.uploadedAt));
+
+			return c.json({ success: true, data: documentsList }, 200);
+		} catch (error) {
+			console.error("Error fetching documents:", error);
+			return c.json({ error: "Error fetching documents" }, 500);
+		}
+	})
+
+	.get("/:id", authenticateToken, async (c) => {
+		const { id } = c.req.param();
+		const document = await db
+			.select()
+			.from(documentsInAppe)
+			.where(eq(documentsInAppe.id, id))
+			.limit(1);
+		if (document.length === 0) {
+			return c.json({ error: "Document not found" }, 404);
+		}
+		return c.json(document[0]);
+	})
+
+	.post("/", authenticateToken, requireRole(["admin"]), async (c) => {
+		const newDocument = await c.req.json();
+		const result = await db
+			.insert(documentsInAppe)
+			.values(newDocument)
+			.returning();
+		return c.json(result[0]);
+	})
+
+	.put("/:id", authenticateToken, requireRole(["admin"]), async (c) => {
+		const { id } = c.req.param();
+		const updatedDocument = await c.req.json();
+		const result = await db
+			.update(documentsInAppe)
+			.set(updatedDocument)
+			.where(eq(documentsInAppe.id, id))
+			.returning();
+		if (result.length === 0) {
+			return c.json({ error: "Document not found" }, 404);
+		}
+		return c.json(result[0]);
+	})
+
+	.delete("/:id", authenticateToken, requireRole(["admin"]), async (c) => {
+		const { id } = c.req.param();
+		const result = await db
+			.delete(documentsInAppe)
+			.where(eq(documentsInAppe.id, id))
+			.returning();
+		if (result.length === 0) {
+			return c.json({ error: "Document not found" }, 404);
+		}
+		return c.json({ message: "Document deleted successfully" });
+	})
+
+	.get("/:id/download", authenticateToken, async (c) => {
+		const { id } = c.req.param();
+		const [document] = await db
+			.select()
+			.from(documentsInAppe)
+			.where(eq(documentsInAppe.id, id))
+			.limit(1);
+
+		if (!document) {
+			return c.json({ error: "Document not found" }, 404);
+		}
+
+		const filePath = document.filePath;
+		if (!filePath) {
+			return c.json({ error: "File path not found" }, 404);
+		}
+		const fileBuffer = await Bun.file(filePath).arrayBuffer();
+		return c.body(fileBuffer);
+	});
