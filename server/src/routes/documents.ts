@@ -97,21 +97,26 @@ export const documentsRoutes = new Hono<{
 	})
 
 	.get("/:id/download", authenticateToken, async (c) => {
-		const { id } = c.req.param();
-		const [document] = await db
-			.select()
-			.from(documentsInAppe)
-			.where(eq(documentsInAppe.id, id))
-			.limit(1);
+		try {
+			const { id } = c.req.param();
+			const [document] = await db
+				.select()
+				.from(documentsInAppe)
+				.where(eq(documentsInAppe.id, id))
+				.limit(1);
 
-		if (!document) {
-			return c.json({ error: "Document not found" }, 404);
-		}
+			if (!document) {
+				return c.json({ error: "Document not found" }, 404);
+			}
 
-		const filePath = document.filePath;
-		if (!filePath) {
-			return c.json({ error: "File path not found" }, 404);
+			const filePath = document.filePath;
+			if (!filePath) {
+				return c.json({ error: "File path not found" }, 404);
+			}
+			const fileBuffer = await Bun.file(filePath).arrayBuffer();
+			return c.body(fileBuffer);
+		} catch (error) {
+			console.error("Error downloading document:", error);
+			return c.json({ error: "Error downloading document" }, 500);
 		}
-		const fileBuffer = await Bun.file(filePath).arrayBuffer();
-		return c.body(fileBuffer);
 	});
