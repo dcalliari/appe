@@ -30,8 +30,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 	useEffect(() => {
 		const checkAuth = async () => {
-			const token = localStorage.getItem("ape_token");
-			const savedUser = localStorage.getItem("ape_user");
+			const token = localStorage.getItem("appe_token");
+			const savedUser = localStorage.getItem("appe_user");
 
 			if (token && savedUser) {
 				try {
@@ -40,8 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 					setUser(response.user);
 				} catch {
 					// Token is invalid, clear storage
-					localStorage.removeItem("ape_token");
-					localStorage.removeItem("ape_user");
+					localStorage.removeItem("appe_token");
+					localStorage.removeItem("appe_user");
 					apiClient.removeToken();
 				}
 			}
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			const userData = response.user;
 
 			setUser(userData);
-			localStorage.setItem("ape_user", JSON.stringify(userData));
+			localStorage.setItem("appe_user", JSON.stringify(userData));
 			setIsLoading(false);
 			return true;
 		} catch (error) {
@@ -74,8 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 	const logout = () => {
 		setUser(null);
-		localStorage.removeItem("ape_user");
-		localStorage.removeItem("ape_token");
+		localStorage.removeItem("appe_user");
+		localStorage.removeItem("appe_token");
 		apiClient.removeToken();
 	};
 

@@ -8,17 +8,17 @@ class ApiClient {
 
 	constructor(baseURL: string) {
 		this.baseURL = baseURL;
-		this.token = localStorage.getItem("ape_token");
+		this.token = localStorage.getItem("appe_token");
 	}
 
 	setToken(token: string) {
 		this.token = token;
-		localStorage.setItem("ape_token", token);
+		localStorage.setItem("appe_token", token);
 	}
 
 	removeToken() {
 		this.token = null;
-		localStorage.removeItem("ape_token");
+		localStorage.removeItem("appe_token");
 	}
 
 	private getHeaders() {
