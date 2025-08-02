@@ -20,7 +20,7 @@ export const noticesRoutes = new Hono<{
 				.where(
 					or(
 						isNull(noticesInAppe.expires_at),
-						gte(noticesInAppe.expires_at, new Date().toDateString()),
+						gte(noticesInAppe.expires_at, new Date().toISOString()),
 					),
 				)
 				.orderBy(desc(noticesInAppe.created_at));

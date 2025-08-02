@@ -80,7 +80,7 @@ export const bookingsRoutes = new Hono<{
 				);
 			}
 
-			const targetDate = new Date(date).toISOString();
+			const targetDate = new Date(date as string).toISOString().split("T")[0];
 
 			const existingBookings = await db
 				.select()
@@ -88,7 +88,7 @@ export const bookingsRoutes = new Hono<{
 				.where(
 					and(
 						eq(spaceBookingsInAppe.space_name, spaceName),
-						eq(spaceBookingsInAppe.booking_date, targetDate),
+						eq(spaceBookingsInAppe.booking_date, targetDate as string),
 						not(eq(spaceBookingsInAppe.status, "rejected")),
 					),
 				)
@@ -127,7 +127,7 @@ export const bookingsRoutes = new Hono<{
 							eq(spaceBookingsInAppe.space_name, validatedData.space_name),
 							eq(
 								spaceBookingsInAppe.booking_date,
-								validatedData.booking_date.toISOString(),
+								validatedData.booking_date as string,
 							),
 							not(eq(spaceBookingsInAppe.status, "rejected")),
 						),
@@ -151,7 +151,7 @@ export const bookingsRoutes = new Hono<{
 					id: crypto.randomUUID(),
 					user_id: userPayload.userId,
 					space_name: validatedData.space_name,
-					booking_date: validatedData.booking_date.toISOString(),
+					booking_date: validatedData.booking_date as string,
 					start_time: validatedData.start_time,
 					end_time: validatedData.end_time,
 				});
@@ -253,7 +253,7 @@ export const bookingsRoutes = new Hono<{
 					.set({
 						...validatedData,
 						booking_date: validatedData.booking_date
-							? validatedData.booking_date.toISOString()
+							? validatedData.booking_date
 							: undefined,
 						status: validatedData.status ? validatedData.status : undefined,
 					})

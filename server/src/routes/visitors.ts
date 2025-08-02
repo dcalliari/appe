@@ -96,7 +96,7 @@ export const visitorsRoutes = new Hono<{
 						requester_id: userPayload.userId,
 						visitor_name: validatedData.visitor_name,
 						visitor_document: validatedData.visitor_document,
-						visit_date: validatedData.visit_date.toDateString(),
+						visit_date: validatedData.visit_date as string,
 						visit_time: validatedData.visit_time,
 						status: "pending",
 					})
