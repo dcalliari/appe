@@ -49,6 +49,9 @@ export const authenticateToken = createMiddleware<Env>(async (c, next) => {
 	const token = authHeader?.split(" ")[1];
 
 	if (!token) {
+		if (env.NODE_ENV === "development") {
+			return await next();
+		}
 		return c.json({ error: "Token de acesso requerido" }, 401);
 	}
 
