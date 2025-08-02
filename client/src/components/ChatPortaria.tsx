@@ -23,11 +23,11 @@ interface ChatUser {
 
 interface ChatMessage {
 	id: string;
-	fromUserId: string;
-	toUserId: string;
+	from_user_id: string;
+	to_user_id: string;
 	message: string;
-	isRead: boolean;
-	createdAt: string;
+	is_read: boolean;
+	created_at: string;
 }
 
 export const ChatPortaria = () => {
@@ -307,7 +307,7 @@ export const ChatPortaria = () => {
 							</div>
 						) : (
 							messages.map((message) => {
-								const isOwnMessage = message.fromUserId === user?.id;
+								const isOwnMessage = message.from_user_id === user?.id;
 
 								return (
 									<div
@@ -330,10 +330,10 @@ export const ChatPortaria = () => {
 												}`}
 											>
 												<span className="text-xs">
-													{formatTime(message.createdAt)}
+													{formatTime(message.created_at)}
 												</span>
 												{isOwnMessage &&
-													(message.isRead ? (
+													(message.is_read ? (
 														<CheckCheck className="w-3 h-3 text-blue-400" />
 													) : (
 														<CheckCheck className="w-3 h-3" />
