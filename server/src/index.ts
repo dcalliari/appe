@@ -1,6 +1,7 @@
 import { env } from "@server/env";
 import { authRoutes } from "@server/routes/auth";
 import { chatRoutes } from "@server/routes/chat";
+import { visitorsRoutes } from "@server/routes/visitors";
 import { getIp } from "@server/utils/ip";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -46,6 +47,7 @@ export const app = new Hono()
 
 	.route("/api/auth", authRoutes)
 	.route("/api/chat", chatRoutes)
+	.route("/api/visitors", visitorsRoutes)
 
 	.onError((err, c) => {
 		console.error("API Error:", err);
