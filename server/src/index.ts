@@ -1,6 +1,9 @@
 import { env } from "@server/env";
 import { authRoutes } from "@server/routes/auth";
+import { bookingsRoutes } from "@server/routes/bookings";
 import { chatRoutes } from "@server/routes/chat";
+import { documentsRoutes } from "@server/routes/documents";
+import { noticesRoutes } from "@server/routes/notices";
 import { visitorsRoutes } from "@server/routes/visitors";
 import { getIp } from "@server/utils/ip";
 import { Hono } from "hono";
@@ -9,8 +12,6 @@ import { logger } from "hono/logger";
 import { routePath } from "hono/route";
 import { secureHeaders } from "hono/secure-headers";
 import { rateLimiter } from "hono-rate-limiter";
-import { documentsRoutes } from "./routes/documents";
-import { noticesRoutes } from "./routes/notices";
 
 export const app = new Hono()
 
@@ -52,6 +53,7 @@ export const app = new Hono()
 	.route("/api/visitors", visitorsRoutes)
 	.route("/api/notices", noticesRoutes)
 	.route("/api/documents", documentsRoutes)
+	.route("/api/bookings", bookingsRoutes)
 
 	.onError((err, c) => {
 		console.error("API Error:", err);
