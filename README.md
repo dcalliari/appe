@@ -1,4 +1,4 @@
-# Appê
+# Appê 🏢
 
 A full-stack TypeScript monorepo for a modern condominium management application, built with Bun, Hono, Vite, and React.
 
